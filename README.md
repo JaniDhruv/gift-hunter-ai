@@ -80,6 +80,16 @@ Both AI planning and live shopping require their respective API keys. If the AI 
 - SerpApi Google Shopping engine for product discovery
 - Lucide React icons
 
+## Future Enhancements
+
+MongoDB Atlas is reserved for persistent, user-controlled memory. These are planned capabilities; the current app does not collect or save friend profiles, gift plans, or shopping picks.
+
+- **Friend profiles:** Let users save and revisit a friend's interests, preferences, important details, and things to avoid instead of re-entering them each time.
+- **Gift memory and shortlists:** Save plans and favorite listings, record gifts already given, and use feedback to make future recommendations more relevant and avoid repeats.
+- **Memory-aware chat agent:** Add a conversational planning flow that asks useful follow-up questions and, with the user's consent, uses the saved profile and gift history as context for personalized suggestions.
+- **Semantic recall:** Explore MongoDB Atlas Vector Search to retrieve related past gifts and preferences when exact keyword matches are not enough.
+- **Privacy controls:** Provide clear consent and controls to review, update, or delete saved profiles and gift history.
+
 ## Current Scope
 
 MongoDB Atlas is retained for planned friend profiles and saved gifts, but the current app does not connect to it. Gift plans and shopping results are not persisted between requests; Atlas Vector Search is not implemented.

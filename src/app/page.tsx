@@ -1,183 +1,84 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Gift, Sparkles, User, Tag, CalendarHeart } from "lucide-react";
+import { FormEvent, useState } from "react";
+import "./shop.css";
+import { ArrowDown, ArrowUp, ArrowUpRight, Gift, Heart, Loader2, Search, Sparkles, UserRound } from "lucide-react";
 
-type Product = {
-  title: string;
-  price: string;
-  link: string;
-  thumbnail: string;
-  source: string;
-  reasoning: string;
-};
+type Direction = { id: string; title: string; category: string; estimatedPrice: string; whyItFits: string; personalTouch: string };
+type Plan = { recipientSummary: string; giftStrategy: string; directions: Direction[] };
+type Product = { title: string; price: string; link: string; linkLabel: string; source: string; thumbnail?: string; directionId: string; directionTitle: string };
+type Result = { plan: Plan; products: Product[]; mode: string; provider?: string; model?: string; searchCount: number; budget: number; shoppingEnabled: boolean; fallbackReason?: string };
 
 export default function Home() {
   const [friendName, setFriendName] = useState("");
   const [interests, setInterests] = useState("");
   const [budget, setBudget] = useState("");
-  const [occasion, setOccasion] = useState("");
+  const [occasion, setOccasion] = useState("Birthday");
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<Product[] | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
+  const [view, setView] = useState<"plan" | "shop">("plan");
+  const [showAllProducts, setShowAllProducts] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setLoading(true);
     setError("");
-    setResults(null);
-
     try {
-      const res = await fetch("/api/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ friendName, interests, budget, occasion }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to find gifts");
-      }
-
-      setResults(data.products);
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      const response = await fetch("/api/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ friendName, interests, budget, occasion }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to build a gift plan.");
+      setResult(data);
+      setView(data.products?.length ? "shop" : "plan");
+      setShowAllProducts(false);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to build a gift plan.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  return (
-    <div className="container">
-      <nav className="nav">
-        <div className="logo">
-          <Gift className="logo-icon" size={28} />
-          Gift Hunter AI
-        </div>
-        <a href="https://dev.to" target="_blank" rel="noreferrer" style={{color: 'var(--text-secondary)', textDecoration: 'none'}}>
-          Hacktoberfest 2026
-        </a>
-      </nav>
+  const hasProducts = Boolean(result?.products.length);
+  const productGroups = Object.values((result?.products || []).reduce<Record<string, { directionId: string; directionTitle: string; products: Product[] }>>((groups, product) => {
+    const group = groups[product.directionId] || (groups[product.directionId] = { directionId: product.directionId, directionTitle: product.directionTitle, products: [] });
+    group.products.push(product);
+    return groups;
+  }, {}));
+  const hasMoreProducts = productGroups.some((group) => group.products.length > 2);
 
-      <div className="header">
-        <h1>Find the Perfect Gift.</h1>
-        <p>Tell us about your friend, and our Gemma-powered AI will scour the web to find the most thoughtful, unique gifts they'll actually love.</p>
-      </div>
-
-      <div className="grid-2">
-        <div className="card">
-          <form onSubmit={handleSearch}>
-            <div className="input-group">
-              <label><User size={14} style={{display: 'inline', marginRight: '4px', verticalAlign: 'middle'}}/> Friend's Name</label>
-              <input
-                type="text"
-                className="input"
-                placeholder="e.g. Alex"
-                value={friendName}
-                onChange={(e) => setFriendName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="input-group">
-              <label><Sparkles size={14} style={{display: 'inline', marginRight: '4px', verticalAlign: 'middle'}}/> Interests & Hobbies</label>
-              <textarea
-                className="textarea"
-                placeholder="e.g. Loves obscure 80s synth-pop, mechanical keyboards, and making pour-over coffee."
-                value={interests}
-                onChange={(e) => setInterests(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="grid-2" style={{gap: '1rem'}}>
-              <div className="input-group">
-                <label><Tag size={14} style={{display: 'inline', marginRight: '4px', verticalAlign: 'middle'}}/> Budget ($)</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. 50"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="input-group">
-                <label><CalendarHeart size={14} style={{display: 'inline', marginRight: '4px', verticalAlign: 'middle'}}/> Occasion</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. Birthday, Christmas, Just Because"
-                  value={occasion}
-                  onChange={(e) => setOccasion(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <button type="submit" className="btn" disabled={loading} style={{width: '100%', marginTop: '1rem'}}>
-              {loading ? (
-                <>
-                  <span className="loading-spinner"></span> Searching the Web & Reasoning...
-                </>
-              ) : (
-                <>
-                  <Search size={18} /> Find Gifts
-                </>
-              )}
-            </button>
-            {error && <p style={{color: '#ef4444', marginTop: '1rem', textAlign: 'center'}}>{error}</p>}
-          </form>
-        </div>
-
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', minHeight: '400px' }}>
-          {!results && !loading && (
-            <>
-              <div style={{background: 'rgba(99, 102, 241, 0.1)', padding: '2rem', borderRadius: '50%', marginBottom: '1.5rem'}}>
-                <Gift size={48} style={{color: 'var(--accent-primary)'}} />
-              </div>
-              <h3 style={{fontSize: '1.5rem', marginBottom: '0.5rem'}}>Waiting for details</h3>
-              <p style={{color: 'var(--text-secondary)', maxWidth: '300px'}}>Fill out the form to let Gemma find the best gifts across the web via SerpApi.</p>
-            </>
-          )}
-
-          {loading && (
-             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem'}}>
-               <div className="loading-spinner" style={{width: '40px', height: '40px', borderWidth: '3px'}}></div>
-               <p style={{color: 'var(--accent-primary)', fontWeight: 500}}>Analyzing interests...</p>
-             </div>
-          )}
-
-          {results && results.length > 0 && (
-             <div style={{width: '100%', height: '100%', overflowY: 'auto'}}>
-                <h3 style={{textAlign: 'left', marginBottom: '1rem', fontSize: '1.5rem'}}>Top Picks for {friendName}</h3>
-                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                  {results.map((product, i) => (
-                    <div key={i} style={{background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '1rem', textAlign: 'left', border: '1px solid var(--border-color)'}}>
-                      <div style={{display: 'flex', gap: '1rem'}}>
-                        {product.thumbnail && (
-                           <img src={product.thumbnail} alt={product.title} style={{width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', background: 'white'}} />
-                        )}
-                        <div>
-                          <h4 style={{fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.25rem'}}>{product.title}</h4>
-                          <div style={{color: 'var(--accent-secondary)', fontWeight: 700, marginBottom: '0.5rem'}}>{product.price}</div>
-                          <a href={product.link} target="_blank" rel="noreferrer" style={{color: 'var(--accent-primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500}}>View on {product.source} →</a>
-                        </div>
-                      </div>
-                      <div className="reasoning-box">
-                        <span style={{color: 'var(--accent-primary)', fontWeight: 600, marginRight: '4px'}}>✨ Gemma's Reasoning:</span>
-                        {product.reasoning}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  return <main className="app-shell">
+    <nav className="nav"><a className="brand" href="#top"><Gift size={21} /><span>Gift Hunter Agent</span></a><span className="nav-note">Thoughtful gifts, found with AI</span></nav>
+    <section className="hero" id="top"><p className="eyebrow"><Heart size={14} /> Personal gift planner</p><h1>Find a gift that feels <em>made for them.</em></h1><p>Start with what you know. Get eight ideas shaped around their interests, budget, and occasion, with live listings for the strongest picks.</p></section>
+    <section className="workspace">
+      <form className="brief" onSubmit={handleSearch}>
+        <div className="section-heading"><span>01</span><div><h2>Read the room</h2><p>Specific details make the plan better.</p></div></div>
+        <label><UserRound size={15} /> Their name<input value={friendName} onChange={(event) => setFriendName(event.target.value)} placeholder="Alex" required /></label>
+        <label><Sparkles size={15} /> Interests & personal clues<textarea value={interests} onChange={(event) => setInterests(event.target.value)} placeholder="Coding, anime, favorite series, what they already own..." required /></label>
+        <div className="form-row"><label>Budget<input inputMode="numeric" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="100" required /></label><label>Occasion<input value={occasion} onChange={(event) => setOccasion(event.target.value)} placeholder="Birthday" required /></label></div>
+        <button className="find-button" type="submit" disabled={loading}>{loading ? <><Loader2 className="spin" size={18} /> Building your plan</> : <><Search size={18} /> Build gift plan</>}</button>
+        {error && <p className="error" role="alert">{error}</p>}<p className="quota-note">One AI plan. Shopping checks the top three ideas only.</p>
+      </form>
+      <section className="recommendations" aria-live="polite">
+        {loading && <div className="empty-state"><Loader2 className="spin accent-icon" size={30} /><h2>Connecting the dots</h2><p>Creating eight ways to make this feel personal.</p></div>}
+        {!loading && !result && <div className="empty-state"><div className="gift-mark"><Gift size={30} /></div><div><p className="eyebrow">Your gift shortlist</p><h2>Start with what makes them, them.</h2><p>Thoughtful ideas and real listings will land here.</p></div></div>}
+        {!loading && result && <>
+          <header className="results-heading"><div><p className="eyebrow">{result.mode}{result.provider ? ` · ${result.provider}` : ""}</p><h2>For {friendName}</h2></div><span>{result.plan.directions.length} directions</span></header>
+          <div className="strategy"><p>{result.plan.recipientSummary}</p><strong>{result.plan.giftStrategy}</strong>{result.mode === "Curated backup plan" && <p className="backup-note"><b>AI connection issue:</b> {result.fallbackReason || "The model did not return a usable plan."} Curated gift directions are shown below.</p>}{result.mode !== "Curated backup plan" && result.products.length === 0 && <p className="backup-note">{result.shoppingEnabled ? `No live listings with a verifiable price under $${result.budget} were found. Your gift directions are still here.` : "Live shopping is not configured, so only the gift directions are available."}</p>}</div>
+          <div className="tabs" role="tablist"><button className={view === "plan" ? "active" : ""} onClick={() => setView("plan")} type="button">Gift directions <span>8</span></button>{hasProducts && <button className={view === "shop" ? "active" : ""} onClick={() => setView("shop")} type="button">Verified picks <span>{result.products.length}</span></button>}</div>
+          {view === "plan" && <div className="direction-grid">{result.plan.directions.map((direction, index) => <article className="direction-card" key={direction.id}><div className="direction-top"><span>0{index + 1}</span><small>{direction.category}</small></div><h3>{direction.title}</h3><p className="price">{direction.estimatedPrice}</p><p>{direction.whyItFits}</p><div className="personal-touch"><Sparkles size={14} /><span>{direction.personalTouch}</span></div></article>)}</div>}
+          {view === "shop" && hasProducts && <>
+            <div className="shop-summary"><p>{result.products.length} listings across {productGroups.length} gift ideas</p>{hasMoreProducts && <button type="button" onClick={() => setShowAllProducts((shown) => !shown)}>{showAllProducts ? "Show fewer" : `Show all ${result.products.length}`} {showAllProducts ? <ArrowUp size={14} /> : <ArrowDown size={14} />}</button>}</div>
+            <div className="shop-list">{productGroups.map((group, groupIndex) => {
+              const category = result.plan.directions.find((direction) => direction.id === group.directionId)?.category;
+              const products = showAllProducts ? group.products : group.products.slice(0, 2);
+              return <section className="product-group" key={group.directionId}>
+                <header className="product-group-heading"><div><p className="eyebrow">Direction 0{groupIndex + 1}{category ? ` · ${category}` : ""}</p><h3>{group.directionTitle}</h3></div><span>{group.products.length} picks</span></header>
+                <div className="product-grid">{products.map((product, index) => <article className="product-result" key={`${product.title}-${index}`}>{product.thumbnail ? <img src={product.thumbnail} alt="" /> : <div className="product-placeholder"><Gift size={24} /></div>}<div className="product-copy"><div className="product-meta"><span>{product.source}</span></div><h4><a className="product-title-link" href={product.link} target="_blank" rel="noopener noreferrer">{product.title}</a></h4><div className="product-bottom"><p className="price">{product.price}</p><a className="product-link" href={product.link} target="_blank" rel="noopener noreferrer">{product.linkLabel} <ArrowUpRight size={15} /></a></div></div></article>)}</div>
+              </section>;
+            })}</div>
+          </>}
+        </>}
+      </section>
+    </section>
+  </main>;
 }

@@ -5,18 +5,18 @@ Gift Hunter Agent turns what you know about someone into a thoughtful gift plan:
 ## Screenshots
 
 <figure>
-  <img src="docs/screenshots/gift-directions.png" alt="Gift Hunter Agent showing the recipient form and eight personalized gift directions" width="100%">
-  <figcaption><strong>Gift directions.</strong> The plan connects Alex's coding and anime interests to eight ideas within the birthday budget.</figcaption>
+  <img src="docs/screenshots/gift-directions.png" alt="Deployed Gift Hunter Agent showing the recipient form and eight personalized gift directions" width="100%">
+  <figcaption><strong>Gift directions.</strong> The deployed app turns Alex's coding and pop-music interests into eight birthday ideas within a $100 budget.</figcaption>
 </figure>
 
 <figure>
-  <img src="docs/screenshots/verified-picks.png" alt="Verified shopping picks grouped beneath two gift directions" width="100%">
-  <figcaption><strong>Verified picks.</strong> Product listings are grouped by gift direction, with prices and retailer links visible.</figcaption>
+  <img src="docs/screenshots/verified-picks.png" alt="Deployed shopping view showing verified product picks grouped beneath two gift directions" width="100%">
+  <figcaption><strong>Verified picks.</strong> The live site groups priced product listings under the two matching gift directions.</figcaption>
 </figure>
 
 <figure>
-  <img src="docs/screenshots/verified-picks-expanded.png" alt="Expanded shopping view with more listings for each gift direction" width="100%">
-  <figcaption><strong>Expanded shortlist.</strong> The expanded view shows additional listings while keeping each idea's products together.</figcaption>
+  <img src="docs/screenshots/verified-picks-expanded.png" alt="Expanded deployed shopping view with additional product listings for each gift direction" width="100%">
+  <figcaption><strong>Expanded shortlist.</strong> Review more live listings while keeping each product grouped with its gift idea.</figcaption>
 </figure>
 
 ## What It Does

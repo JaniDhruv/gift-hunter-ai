@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gift Hunter Agent
 
-## Getting Started
+Gift Hunter Agent turns what you know about someone into a thoughtful gift plan: eight distinct ideas, followed by live shopping picks for the strongest directions.
 
-First, run the development server:
+## Screenshots
+
+<figure>
+  <img src="docs/screenshots/gift-directions.png" alt="Gift Hunter Agent showing the recipient form and eight personalized gift directions" width="100%">
+  <figcaption><strong>Gift directions.</strong> The plan connects Alex's coding and anime interests to eight ideas within the birthday budget.</figcaption>
+</figure>
+
+<figure>
+  <img src="docs/screenshots/verified-picks.png" alt="Verified shopping picks grouped beneath two gift directions" width="100%">
+  <figcaption><strong>Verified picks.</strong> Product listings are grouped by gift direction, with prices and retailer links visible.</figcaption>
+</figure>
+
+<figure>
+  <img src="docs/screenshots/verified-picks-expanded.png" alt="Expanded shopping view with more listings for each gift direction" width="100%">
+  <figcaption><strong>Expanded shortlist.</strong> The expanded view shows additional listings while keeping each idea's products together.</figcaption>
+</figure>
+
+## What It Does
+
+- Builds eight gift directions from a recipient's interests, personal clues, occasion, and maximum budget.
+- Uses Google Gemma for planning, with Gemini Flash Lite as a Google fallback. NVIDIA NIM can be configured as an alternative provider.
+- Searches Google Shopping for the three highest-priority directions when SerpApi is configured.
+- Shows priced listings only when they are at or below the entered budget and their titles match at least one stated interest.
+- Keeps gift directions available when an AI or shopping integration is unavailable.
+
+## How It Works
+
+1. Enter a name, interests, personal clues, budget, and occasion.
+2. The model returns a structured plan containing eight distinct ideas and three prioritized shopping queries.
+3. SerpApi retrieves Google Shopping results for those queries.
+4. The server filters out listings without a parseable price, listings over budget, and titles that do not reflect a stated interest. Remaining picks are grouped under their corresponding directions.
+
+Shopping prices and availability can change; confirm the details on the retailer's page before buying.
+
+## Run Locally
+
+Requirements: Node.js 20.9 or later and npm.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Next.js may choose another port if 3000 is already in use.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a local environment file from the example, then add your own provider keys:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```powershell
+Copy-Item .env.example .env.local
+```
 
-## Learn More
+Never commit `.env.local` or paste API keys into the README.
 
-To learn more about Next.js, take a look at the following resources:
+## Configuration
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Purpose |
+| --- | --- |
+| `GEMINI_API_KEY` | Enables Google AI Studio planning. Gemma is the default model. |
+| `GEMMA_PROVIDER` | Selects `google` (default) or `nvidia`. |
+| `GEMMA_MODEL` | Google primary model; defaults to `gemma-4-26b-a4b-it`. |
+| `GEMINI_FALLBACK_MODEL` | Google fallback model; defaults to `gemini-flash-lite-latest`. |
+| `NVIDIA_NIM_API` | NVIDIA NIM key when `GEMMA_PROVIDER=nvidia`. |
+| `NVIDIA_MODEL` | NVIDIA model; defaults to `google/gemma-4-31b-it`. |
+| `SERPAPI_KEY` | Enables live Google Shopping searches for the top three directions. |
+| `MONGODB_URI` | Reserved for planned persistence; MongoDB is not connected to the current app flow. |
+| `ENABLE_LIVE_SHOPPING` | Set to `false` to disable shopping searches. |
+| `ENABLE_NVIDIA_NIM` | Set to `false` to disable NVIDIA NIM. |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Both AI planning and live shopping require their respective API keys. If the AI provider is unavailable, the app displays a curated gift plan; live product search is skipped for that fallback plan.
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Next.js App Router, React, and TypeScript
+- Google Gen AI SDK for Gemma and Gemini
+- NVIDIA NIM as an optional model provider
+- SerpApi Google Shopping engine for product discovery
+- Lucide React icons
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Current Scope
+
+MongoDB Atlas is retained for planned friend profiles and saved gifts, but the current app does not connect to it. Gift plans and shopping results are not persisted between requests; Atlas Vector Search is not implemented.
+
+Recipient details are sent to the selected AI provider to generate a plan; shopping queries and result filtering are sent through SerpApi. Avoid entering sensitive personal information.
+
+## Checks
+
+```bash
+npx tsc --noEmit
+npm run lint
+npm run build
+```

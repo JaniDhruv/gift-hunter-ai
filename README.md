@@ -203,3 +203,7 @@ The app is deployed at [gift-hunter-ai.vercel.app](https://gift-hunter-ai.vercel
 npm run lint
 npm run build
 ```
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
